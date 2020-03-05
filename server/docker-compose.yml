@@ -1,0 +1,23 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: tohu
+        uid: 1000
+      context: ./app
+      dockerfile: Dockerfile
+    # buildしたイメージの名前を指定できる
+    image: graphql
+    # 作成するコンテナの名前を指定できる
+    container_name: graphql-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./app/www:/var/www
+      - ./app/php.ini:/usr/local/etc/php/php.ini
+networks:
+  # ネットワークまわりがよくわからない。とはいえこの設定はデフォルトとほとんどかわらなくって、
+  # デフォルトの名前から変更になるだけ
+  graphql:
+    driver: bridge

@@ -1,15 +1,22 @@
 FROM php:7.4-fpm
 # dockerコマンドで、引数を設定する or docker-compose.ymlで指定できるみたい
+# https://qiita.com/nacika_ins/items/cf8ceb20711bd077f770#comments
 # docker build . --build-arg user=web
 ARG user
 ARG uid
 
 # まずはパッケージの一覧をアップデート
-#RUN apt-get -y update
+RUN apt-get -y update
 #RUN apt-get -y install zip unzip zlib1g-dev
+# composerでlaravelをprefer-distでインストールすると、zipでもってくるので、zip、unzipが必要になる
+RUN apt-get -y install zip unzip wget
 
 # PHPの拡張モジュールをインストール
 RUN docker-php-ext-install bcmath
+
+# xdebug用のモジュールを追加する
+RUN pecl install xdebug \
+  && docker-php-ext-enable xdebug
 
 # composerの設定はCOPYコマンドを使うことにする
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -25,6 +32,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # -G 作成したユーザーをwww-data,rootのグループに所属する
 # -u useridを指定する
 # -d 作業ディレクトリを指定する(ホームディレクトリは違うのだろうか)
+# https://eng-entrance.com/linux-command-useradd
 
 RUN useradd -G www-data,root -u $uid -d /home/$user $user
 # composerに必要なのかしら。comoser用のディレクトリをhomeディレクトリに作る

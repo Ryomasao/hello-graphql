@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "XDebug on docker",
+      "type": "php",
+      "request": "launch",
+      "port": 9000,
+      "pathMappings": {
+        // {docker上のdocument root}:{ローカルのdocument root}
+        "/var/www": "${workspaceFolder}/app/www"
+      },
+      // BreakPointとまんねえって時はとりあえず、entry時にとまるか確かめよう
+      "stopOnEntry": false
+    }
+  ]
+}

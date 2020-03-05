@@ -19,6 +19,7 @@ PHP を FastCGI で動かすのであれば、php-fpm を使おう。
 Apache のソースコードを読んで学んだ時に、CGI をリクエストの度に起動してたらやべえよってやつだね。
 fastcgi は、別プロセスを最初から立ち上げておいて、Apache と通信して、CGI を実行して結果を返すってやつだったね。FastCGI 自体はそれを実現するための規格で、Web サーバーと通信する際の IF なんかを定義してるやつだった。
 ちなみに Apache に含まれる PHP のモジュール版はどう動いてんのかとか調べてなかった。とはいえ今回は Nginx で動かすので、Apache の話はここまでにしよう。
+※ ああ、PHP 自体 C 言語で書かれてるから、Apache の拡張モジュールとして動かすことができる気がしてきた。
 
 言いたかったことは、php-fpm のコンテナで php を実行するから、php の実行環境はこのコンテナに用意しようね！ってこと。
 
@@ -170,4 +171,109 @@ RUN useradd -G www-data,root -u $uid -d /home/$user $user
 RUN mkdir -p /home/$user/.composer && \
     chown -R $user:$user /home/$user
 
+```
+
+### あとで PHP の基本ページをつくって移動しよう
+
+#### formatter について
+
+PHP の code formatter は`php-cs-fixer`がよさげ。
+https://github.com/FriendsOfPHP/PHP-CS-Fixer
+
+vscode で使う場合は、上記のインストールを済ませたあとに、php-cs-fixer の拡張機能を入れたら、保存時に整形された。
+`vscode-php-cs-fixer`っていうダウンロード数も多くって、`php-cs-fixer`を含んでる拡張機能もあったんだけど、整形されなかった。なぜ。
+
+#### モジュールの考え方について
+
+php では、別ファイルは読み込むには`require`と`include`がある。
+`require`は指定されたパスのファイルがなかったり、ファイル内で構文エラーがあったりすると、FatalError になるのに対し、`include`は waning でになるとのこと。
+
+基本的に`require`を使えばいい気がする。
+
+index.php
+
+```php
+require('./moduleA.php");
+```
+
+別ファイルを参照すると、`index.php`にまるっと`moduleA.php`の内容が展開されるイメージでいいと思う。
+
+なので別ファイルに記載されているトップレベルの変数だったり、クラス宣言なんかは`require`するだけで、参照することができる。
+なんも考えないと、どのファイルにどのクラス宣言があるかはぱっと見わからなくなりそうね。
+
+### VsCode の RemoteDevelopment を使ってみよう
+
+めちゃくちゃ簡単だった。RemoteDevelopment と Docker の拡張機能入れて事前にコンテナを立ち上げて、Docker の拡張機能で Attache するだけ。
+
+もしくは、 `Command + Shift + P` で`Open WorkSpace`でコンテナを起動すると、コンテナの`/workspace`にプロジェクト全体をマウントしてくれる。
+この場合、`.devcontainer/devcontainer.json`が作成され、ここでコンテナ内で有効にする拡張機能の設定とかができる。
+コンテナに繋がってる vscode の拡張機能パレットから、歯車アイコンで`devcontainer.json`に追加するを個別で選択することでも対応できる。
+拡張機能を追加したら、コンテナを作成しなおしになるっぽいので、vscode を再起したほうがよさげ。
+
+`devcontainer.json`を作成しとくと、Attache で接続しても設定は有効になってた。
+特定のディレクトリのみの`devcontainer.json`のみ作成するとかできるんかな。
+これに書いてあるかな。
+https://code.visualstudio.com/docs/remote/containers
+
+### Xdebug を導入する
+
+Dockerfile
+
+```sh
+# xdebug用のモジュールを追加する
+RUN pecl install xdebug \
+  && docker-php-ext-enable xdebug
+```
+
+.vscode/launch.json
+
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "XDebug on docker",
+      "type": "php",
+      "request": "launch",
+      "port": 9000,
+      "pathMappings": {
+        // {docker上のdocument root}:{ローカルのdocument root}
+        "/var/www": "${workspaceFolder}/app/www"
+      },
+      // BreakPointとまんねえって時はとりあえず、entry時にとまるか確かめよう
+      "stopOnEntry": false
+    }
+  ]
+}
+```
+
+### Composer の仕組み
+
+php の組み込み関数である`spl_autoload_register`で実装されてる。
+これは、クラスを new する際に呼び出す関数を設定することができる。
+`new App/Hoge`ってすると、`spl_autoload_register`で`composer.json`でマップした情報をもとにクラスを探してくれる。
+マップ情報は実行時に json をみるとかじゃなくって`composer dump-autoload`を実行することで、マップ情報が埋め込まれた php を生成してるんだ。
+
+```json
+{
+  "autoload": {
+    "psr-4": {
+      // Appってつくものは、services配下にあるっていうマップ
+      "App\\": "services/"
+    }
+  }
+}
+```
+
+クラスだけじゃなくって、以下のように helper 関数なんかも登録することができる。
+
+```json
+{
+  "autoload": {
+    "psr-4": {
+      "App\\": "services/"
+    },
+    "files": ["helper/functions.php"]
+  }
+}
 ```

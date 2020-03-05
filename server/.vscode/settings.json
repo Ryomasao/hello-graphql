@@ -1,0 +1,4 @@
+{
+  "vscode-php-cs-fixer.fixOnSave": true,
+  "vscode-php-cs-fixer.toolPath": "/usr/local/bin/"
+}
