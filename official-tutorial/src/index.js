@@ -1,38 +1,20 @@
-const { GraphQLServer} = require('graphql-yoga')
-
-let links = [
-  {
-    id: 'link-0',
-    url: 'www.howtographql.com',
-    description: 'Fullstack tutorial for GraphQL'
-  },
-  {
-    id: 'link-1',
-    url: 'www.google.com',
-    description: 'google'
-  },
-]
-
-let idCount = links.length
+const { GraphQLServer } = require('graphql-yoga')
+const { prisma } = require('./generated/prisma-client')
 
 // GraphQL実装
 const resolvers = {
   Query: {
     info:() => 'This is the API of a Hackernews Clone',
-    feed: () => links,
-    link: (parent, args) => {
-      return links.find(link => link.id === args.id)
+    feed:(root, args, context, info) => {
+      return context.prisma.links()
     }
   },
   Mutation: {
-    post:(parent, args) => {
-      const link ={
-        id: `link-${idCount++}`,
+    post:(root, args, context) => {
+      return context.prisma.createLink({
         url: args.url,
         description: args.description
-      }
-      links.push(link)
-      return link
+      })
     },
     updateLink:(parent, args) => {
       // ない場合のエラーハンドリングってどうすんだろ
@@ -59,5 +41,9 @@ const resolvers = {
   },
 }
 
-const server = new GraphQLServer({typeDefs:'./src/schema.graphql', resolvers})
+const server = new GraphQLServer({
+  typeDefs: './src/schema.graphql',
+  resolvers,
+  context: { prisma }
+})
 server.start(() => console.log('Server is running'))
