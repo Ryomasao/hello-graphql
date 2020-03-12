@@ -30,21 +30,40 @@ const login = async (parent, args, context, info) => {
 
 
 const post = (parent, args, context, info) => {
-  const userId = getUserId(context)
+ const userId = getUserId(context)
 
+ // Promise返すんだけど、どのレイヤでawaitしてんだろ
  return context.prisma.createLink({
    url: args.url,
    description: args.description,
+   // connectっていうのもprismaの仕様っぽい
+   // https://www.prisma.io/docs/prisma-client/basic-data-access/writing-data-JAVASCRIPT-rsc6/
    postedBy: { connect: { id: userId }}
  })
 }
 
-// TODO update
-// TODO delete
+// https://www.prisma.io/docs/prisma-client/basic-data-access/reading-data-JAVASCRIPT-rsc2/
+// https://www.prisma.io/docs/prisma-client/basic-data-access/writing-data-JAVASCRIPT-rsc6/
+const updateLink = (parent, args, context, info) => {
+  const { id , ...updatedData } = args
+  return context.prisma.updateLink({
+    data: {
+     ...updatedData
+    },
+    where: { id }
+  })
+}
+
+const deleteLink = (parent, args, context, info) => {
+  return context.prisma.deleteLink({id: args.id})
+}
+
 
 
 module.exports = {
   signup,
   login,
-  post
+  post,
+  updateLink,
+  deleteLink
 }

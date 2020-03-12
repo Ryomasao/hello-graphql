@@ -38,9 +38,12 @@ const hoge = (parent, args) => {
 // Linkデータに乗ってるuserIdをもとにUsersTableから値をとってくる的なイメージになってる
 // 実際に、postedByは、linkのデータ分呼ばれてる
 // こうやってみるとN+1問題の問題そのものが起きる気がするけど、どうやって回避すんだろね
+// ああ、prismaとRDBとの間でうまいことやってるのか
 const postedBy = (parent, args, context) => {
   // prismaのお作法がよくわからん
   // postedBy()で関数を実行するあたりがなぞ
+  // 興味が出たタイミングでよもう
+  // https://www.prisma.io/docs/prisma-client/basic-data-access/reading-data-JAVASCRIPT-rsc2/
   return context.prisma.link({ id: parent.id }).postedBy()
 }
 
