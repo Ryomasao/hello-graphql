@@ -38,6 +38,7 @@ const post = (parent, args, context, info) => {
    description: args.description,
    // connectっていうのもprismaの仕様っぽい
    // https://www.prisma.io/docs/prisma-client/basic-data-access/writing-data-JAVASCRIPT-rsc6/
+   // Schemaで、とあるtypeが別typeを包括している場合、RDB的には、2レコード分更新してるようなイメージになってるんだと思う。
    postedBy: { connect: { id: userId }}
  })
 }
@@ -58,6 +59,24 @@ const deleteLink = (parent, args, context, info) => {
   return context.prisma.deleteLink({id: args.id})
 }
 
+const vote = async (parent, args, context, info) => {
+  const userId = getUserId(context)
+
+  const voteExists = await context.prisma.$exists.vote({
+    user: { id: userId },
+    link: { id: args.linkId }
+  })
+
+  if (voteExists) {
+    throw new Error(`Already voted for link:${args.linkId}`)
+  }
+
+  return context.prisma.createVote({
+    user: { connect: { id: userId }},
+    link: { connect: { id: args.linkId }}
+  })
+}
+
 
 
 module.exports = {
@@ -65,5 +84,6 @@ module.exports = {
   login,
   post,
   updateLink,
-  deleteLink
+  deleteLink,
+  vote,
 }

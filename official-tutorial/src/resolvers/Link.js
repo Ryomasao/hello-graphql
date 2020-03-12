@@ -23,12 +23,21 @@
 
 // 定義
 // Query → スキーマ定義で、QueryのlinkはLinkを返却することをGraphQLは知ってる
+// さらにLinkのhogeは、Stringであることを知ってる
+// 仮に、hogeの型をUserにすると、hogeはUserを返却することを想定する
+// なのでクエリ実行結果にUser型で定義している値がなければエラーになる
 
 // 実装
 // Queryのlinkは、prisma.link()を返す
 
 // 以下の場合、parentに、prisma.link()の結果が渡される。
 const hoge = (parent, args) => {
+
+  // 型がUser型であればこんなオブジェクトを返す必要がある
+  // これだとエラーにはなんないけど、意味ないよね。ほしいのは、Linkにのってるuserなので
+  // だからprismaに再度問い合わせるだね
+  //return {id: "", name:""}
+
   //console.log(parent, args)
   return 'fuga'
 }
@@ -47,9 +56,12 @@ const postedBy = (parent, args, context) => {
   return context.prisma.link({ id: parent.id }).postedBy()
 }
 
-
+const votes = (parent, args, context) => {
+  return context.prisma.link({id: parent.id}).votes()
+}
 
 module.exports = {
   postedBy,
-  hoge
+  hoge,
+  votes,
 }
