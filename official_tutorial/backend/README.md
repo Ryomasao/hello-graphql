@@ -27,3 +27,45 @@ const resolvers = {
 とはいえ、使う場合は prisma 用のサーバーを立てなきゃいけないとのこと。
 
 チュートリアルでは、prisma をホスティングしてくれる PrismaCloud を使ってる。
+
+## GraphQL のクエリをすぐ忘れるのでメモ
+
+```
+# 記事を取得する
+query {
+  feed {
+		id,
+    url,
+    description
+  }
+}
+
+# where
+query {
+  feed(filter:"today") {
+    id
+  	description
+    url
+  }
+}
+
+# pagination 指定されたindex(skip)から、2件とってくる。firstなら先頭から、lastなら後尾
+# lastはprismaでサポートしてるけど、このコードではまだ実装してない
+query {
+  feed(first:2, skip:0) {
+    id
+  	description
+    url
+  }
+}
+
+#更新する
+mutation {
+  updateLink(id: "記事のid", url:"www.changed"){
+    id,
+    url,
+    description
+  }
+}
+
+```
