@@ -13,6 +13,15 @@ const LinkList = props => {
           createdAt
           description
           url
+          postedBy {
+            name
+          }
+          votes {
+            id
+            user {
+              name
+            }
+          }
         }
       }
     }
@@ -34,8 +43,16 @@ const LinkList = props => {
         if (error) return <div>Error</div>;
 
         const linksToRender = data.feed.links;
-        return linksToRender.map(link => {
-          return <Link key={link.id} link={link} />;
+        return linksToRender.map((link, index) => {
+          return (
+            <Link
+              key={link.id}
+              link={link}
+              index={index}
+              postedBy={link.postedBy}
+              createdAt={link.createdAt}
+            />
+          );
         });
       }}
     </Query>
