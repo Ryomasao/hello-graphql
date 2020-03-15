@@ -68,4 +68,11 @@ mutation {
   }
 }
 
+# ログイン(mutationに名前をつけた)
+mutation SignupMutation {
+  login(email:"tarou@prisma.io",password:"graphql"){
+    token
+  }
+}
+
 ```
