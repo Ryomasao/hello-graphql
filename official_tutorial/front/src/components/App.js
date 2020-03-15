@@ -1,8 +1,9 @@
 import React from "react";
-import logo from "../logo.svg";
+import LinkList from "./LinkList";
 
-function App() {
-  return <div className="App">Hello GraphQL</div>;
+function App(props) {
+  console.log(props);
+  return <LinkList />;
 }
 
 export default App;
