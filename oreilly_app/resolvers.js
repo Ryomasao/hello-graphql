@@ -39,8 +39,12 @@ const tags = [
 
 module.exports = resolvers = {
 	Query: {
-		totalPhotos: () => photos.length,
-		allPhotos: () => photos
+		totalPhotos: (parent, args, { db }) => {
+			return db.collection('photos').estimatedDocumentCount()
+		},
+		allPhotos: () => db.collection('photos').find().toArray(),
+		totalUsers: (parent, args, { db }) => db.collection('users').estimatedDocumentCount(),
+		allUsers: () => db.collection('users').find().toArray()
 	},
 	Mutation: {
 		// Mutationのresolverの第1引数って親への参照になるんだっけ？
