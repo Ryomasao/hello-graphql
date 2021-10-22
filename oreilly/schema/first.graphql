@@ -1,0 +1,77 @@
+# GraphQLの組み込み型には(ID/String/Float/Int)しかない
+# 下記のようにすることでカスタムスカラー型を定義できる
+# これをしとくとあとで実装する際にバリデーションがかけるっぽい
+# eg) https://github.com/Urigo/graphql-scalars
+scalar DateTime
+
+type User {
+	githubLogin: ID!
+	name: String
+	avatar: String
+	# 配列表記について
+	# 基本、[type!]!でいい。
+	# nullを含む配列を返す場合だったり、要素がない場合に空配列ではなくnullを返す場合とかであれば記法がかわる。
+	# eg) [type]! [type!] [type]
+
+	# Userは複数のPhotoを投稿する
+	# 投稿機能では UserとPhotoは1:N
+	# GraphQLのグラフを無方向にするためにも、UserとPhotoが互いを辿れるようにしておいたほうがいいとのこと。
+	postedPhotos: [Photo!]!
+	# Userは複数のPhotoにタグ付けされる
+	# tag機能では、UserとPhotoはN:N
+	# ※ Photoに写ってるユーザーをタグで表現するみたい。PhotoAにUserAが写ってるてきな。
+	inPhotos: [Photo!]!
+}
+
+# 特定の文字列/数値を返す型であればEnumが使える
+enum PhotoCategory {
+	SELFIE
+	PORTRAIT
+	ACTION
+	LANDSCAPE
+	GRAPHIC
+}
+
+type Photo {
+	id: ID;
+	name: String!
+	url: String!
+	description: String
+	created: DateTime!
+	category: PhotoCategory!
+	postedBy: User!
+	taggedUsers: [User!]!
+}
+
+type Query {
+	totalPhotos: Int!
+	allPhotos: [Photo!]!
+	totalUsers: Int!
+	allUsers: [User!]!
+	User(githubLogin: ID!): User!
+	Photo(id: ID!): Photo!
+}
+
+# 入力型
+# 引数を抽出できるっぽい
+input PostPhotoInput {
+	name: String!
+	description: String
+	category: PhotoCategory=PORTRAIT
+}
+
+type AuthPayload {
+	user: User!
+	token: String!
+}
+
+type Mutation {
+	postPhoto(input: PostPhotoInput): Photo!
+	githubAuth(code: String!): AuthPayload!
+}
+
+schema {
+	query: Query
+	mutation: Mutation
+}
+
