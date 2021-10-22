@@ -1,51 +1,21 @@
-const { ApolloServer } = require('apollo-server')
 const { GraphQLScalarType } = require('graphql')
 
-const typeDefs =  `
-	scalar DateTime
-
-	type User {
-		githubLogin: ID!
-		name: String
-		avatar: String
-		postedPhotos: [Photo!]!
-		inPhotos: [Photo!]!
+class PhotoFactory {
+	constructor() {
+		this.id = 0
 	}
 
-	enum PhotoCategory {
-		SELFIE
-		PORTRAIT
-		ACTION
-		LANDSCAPE
-		GRAPHIC
+	create(input) {
+		this.id = this.id + 1
+		return {
+			id: this.id,
+			created: new Date(),
+			...input
+		}
 	}
+}
 
-	type Photo {
-		id: ID
-		name: String!
-		url: String!
-		description: String
-		category: PhotoCategory!
-		postedBy: User!
-		taggedUsers: [User!]!
-		created: DateTime!
-	}
-
-	input PostPhotoInput {
-		name: String!
-		category: PhotoCategory=PORTRAIT
-		description: String
-	}
-
-	type Query {
-		totalPhotos: Int!
-		allPhotos: [Photo!]!
-	}
-	
-	type Mutation {
-		postPhoto(input: PostPhotoInput!): Photo!
-	}
-`
+const photoFactory = new PhotoFactory;
 
 const users = [
 	{githubLogin: 'u1', name: 'user1'},
@@ -65,24 +35,9 @@ const tags = [
 	{photoId: 102, userId: 'u2'},
 ]
 
-class PhotoFactory {
-	constructor() {
-		this.id = 0
-	}
 
-	create(input) {
-		this.id = this.id + 1
-		return {
-			id: this.id,
-			created: new Date(),
-			...input
-		}
-	}
-}
 
-const photoFactory = new PhotoFactory;
-
-const resolvers = {
+module.exports = resolvers = {
 	Query: {
 		totalPhotos: () => photos.length,
 		allPhotos: () => photos
@@ -133,12 +88,3 @@ const resolvers = {
 		parseLiteral: ast => ast.value
 	})
 }
-
-const server = new ApolloServer({
-	typeDefs,
-	resolvers
-})
-
-server
-	.listen()
-	.then(({url}) => console.log(`GraphGL server running on ${url}`))

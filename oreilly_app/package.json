@@ -1,5 +1,5 @@
 {
-  "name": "oreilly",
+  "name": "oreilly_app",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -10,8 +10,10 @@
   "author": "Ryomasao",
   "license": "ISC",
   "dependencies": {
-    "apollo-server": "^3.4.0",
-    "graphql": "^15.6.1"
+    "apollo-server-express": "^2.25.2",
+    "express": "^4.17.1",
+    "graphql": "^15.6.1",
+    "graphql-playground-middleware-express": "^1.7.22"
   },
   "devDependencies": {
     "nodemon": "^2.0.14"
