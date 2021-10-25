@@ -24,9 +24,9 @@ module.exports = resolvers = {
 		totalPhotos: (parent, args, { db }) => {
 			return db.collection('photos').estimatedDocumentCount()
 		},
-		allPhotos: () => db.collection('photos').find().toArray(),
+		allPhotos: (parent, args, { db }) => db.collection('photos').find().toArray(),
 		totalUsers: (parent, args, { db }) => db.collection('users').estimatedDocumentCount(),
-		allUsers: () => db.collection('users').find().toArray(),
+		allUsers: (parent, args, { db }) => db.collection('users').find().toArray(),
 		me: (parent, args, { currentUser }) => currentUser
 	},
 	Mutation: {
