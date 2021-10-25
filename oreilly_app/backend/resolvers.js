@@ -1,21 +1,5 @@
 const { GraphQLScalarType } = require('graphql')
-
-class PhotoFactory {
-	constructor() {
-		this.id = 0
-	}
-
-	create(input) {
-		this.id = this.id + 1
-		return {
-			id: this.id,
-			created: new Date(),
-			...input
-		}
-	}
-}
-
-const photoFactory = new PhotoFactory;
+const { authorizeWithGithub, getFakeUsers } =  require('./lib')
 
 const users = [
 	{githubLogin: 'u1', name: 'user1'},
@@ -35,8 +19,6 @@ const tags = [
 	{photoId: 102, userId: 'u2'},
 ]
 
-
-
 module.exports = resolvers = {
 	Query: {
 		totalPhotos: (parent, args, { db }) => {
@@ -44,14 +26,73 @@ module.exports = resolvers = {
 		},
 		allPhotos: () => db.collection('photos').find().toArray(),
 		totalUsers: (parent, args, { db }) => db.collection('users').estimatedDocumentCount(),
-		allUsers: () => db.collection('users').find().toArray()
+		allUsers: () => db.collection('users').find().toArray(),
+		me: (parent, args, { currentUser }) => currentUser
 	},
 	Mutation: {
 		// Mutationのresolverの第1引数って親への参照になるんだっけ？
-		postPhoto(parent, args) {
-			const newPhoto = photoFactory.create(args.input)
-			photos.push(newPhoto)
+		async postPhoto(parent, args, context) {
+			if(!context.currentUser) {
+				throw new Error('Unauthorized')
+			}
+
+			const newPhoto = {
+				...args.input,
+				userId: context.currentUser.githubLogin,
+				created: new Date()
+			}
+
+			const result  = await context.db.collection('photos').insertOne(newPhoto)
+			newPhoto.id = result.insertedId
+
 			return newPhoto
+		},
+		async githubAuth(parent, { code }, { db }) {
+			const {
+				message,
+				access_token,
+				avatar_url,
+				login,
+				name
+			} = await authorizeWithGithub({
+				client_id: process.env.CLIENT_ID,
+				client_secret: process.env.CLIENT_SECRET,
+				code
+			})
+
+			if(message) {
+				throw new Error(message)
+			}
+
+			const latestUserInfo = {
+				name,
+				githubLogin: login,
+				githubToken: access_token,
+				avatar: avatar_url
+			}
+
+			await db.collection('users')
+				.replaceOne({githubToken: access_token}, latestUserInfo, {upsert: true})
+
+		return { user: latestUserInfo, token: access_token }
+		},
+		addFakeUsers: async (root, { count }, { db }) => {
+			const users = await getFakeUsers(count)
+			await db.collection('users').insertMany(users)
+			return users
+		},
+		fakeUserAuth: async (root, {githubLogin}, { db } ) => {
+			const user = await db.collection('users')
+				.findOne({githubLogin})
+
+			if(!user) {
+				throw new Error(`Cannot find user with githubLogin ${githubLogin}`)
+			}
+
+			return {
+				token: user.githubToken,
+				user
+			}
 		}
 	},
 	// トリビアルリゾルバなるもの(ルートのresolverに定義されるオブジェクト)
@@ -59,9 +100,12 @@ module.exports = resolvers = {
 	// ここでは、永続化する必要がなく都度導出の値URLを返却するために利用する
 	Photo: {
 		// parentはPhotoを表す
-		url: (parent) => `http://foo.bar/img/${parent.id}.jpg`,
-		postedBy: (parent) => {
-			return users.find(u => u.githubLogin === parent.githubUser)
+		id: (parent) =>  
+		// DBから取得したオブジェクトはautoIncrementによりカラム名が_idになってる
+		parent.id || parent._id,
+		url: (parent) => `http://foo.bar/img/${parent._id}.jpg`,
+		postedBy: (parent, args, { db }) => {
+			return db.collection('users').findOne({ githubLogin: parent.userId })
 		},
 		taggedUsers: (parent) => {
 			const targetPhotoTags  =  tags.filter(t => t.photoId === parent.id)

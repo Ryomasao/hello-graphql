@@ -15,12 +15,15 @@ async function start() {
   const client = await MongoClient.connect(MONDO_DB, { useNewUrlParser: true })
   const db = client.db()
 
-  const context = { db }
   const app = express();
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context
+    context: async ({ req }) => {
+      const githubToken = req.headers.authorization
+      const currentUser = await db.collection('users').findOne({ githubToken })
+      return { db, currentUser }
+    }
   });
 
   server.applyMiddleware({ app });
