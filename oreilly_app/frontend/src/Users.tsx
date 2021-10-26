@@ -1,5 +1,5 @@
 import { gql } from "apollo-boost";
-import { useQuery } from "react-apollo";
+import { useQuery, useMutation } from "react-apollo";
 import { User } from "./models";
 
 const ROOT_QUERY = gql`
@@ -12,6 +12,16 @@ const ROOT_QUERY = gql`
     }
   }
 `;
+
+const ADD_FAKE_USERS_MUTATION = gql`
+  mutation addFakeUsers($count: Int!) {
+    addFakeUsers(count: $count) {
+      githubLogin
+      name
+      avatar
+    }
+  }
+`
 
 type ROOT_DATA = {
   totalUsers: number;
@@ -40,9 +50,22 @@ const UserList = (props: {
 	refetch: Refetch
 }) => {
   const { users } = props;
+  const [ addFakeUsers ] =  useMutation(ADD_FAKE_USERS_MUTATION, {
+    refetchQueries: [
+      { query:ROOT_QUERY }, 
+      'GetRoot' 
+    ]
+  })
+
   return (
     <ul>
 			<button onClick={() => props.refetch()} type="button">refetch user</button>
+      <button onClick={() => addFakeUsers({
+          variables: {count: 1}, 
+       })} 
+        type="button">
+          add fake user
+      </button>
       {users.map((user) => (
         <UserListItem user={user} key={user.githubLogin} />
       ))}
