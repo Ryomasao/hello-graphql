@@ -53,4 +53,5 @@ WebSocket経由で受け取った値を、InMemoryCacheに追加する方法と�
   });
 ```
 
+なお、subscriptionを利用しない場合は、useQueryのrefetchか、useMutationのupdateを利用する。
 

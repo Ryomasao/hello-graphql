@@ -1,14 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { ApolloClient, ApolloProvider, HttpLink, ApolloLink, InMemoryCache, split, concat } from "@apollo/client";
+import { ApolloClient, ApolloProvider, ApolloLink, InMemoryCache, split, concat } from "@apollo/client";
 import { getMainDefinition } from '@apollo/client/utilities';
 import { WebSocketLink } from '@apollo/client/link/ws'
+import { createUploadLink } from 'apollo-upload-client';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 const URL_BACKEND = 'http://localhost:4000/graphql'
 
-const httpLink = new HttpLink({
+const httpLink = createUploadLink({
   uri: URL_BACKEND,
 });
 
