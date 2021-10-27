@@ -1,5 +1,4 @@
-import { gql } from "apollo-boost";
-import { useQuery, useMutation } from "react-apollo";
+import { gql, useQuery, useMutation } from '@apollo/client';
 import { User, AuthenticatedUser } from "./models";
 import MainTemplate from "./components/MainTemplate";
 

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { gql } from "apollo-boost";
-import { useMutation } from "react-apollo";
-import { useHistory } from "react-router-dom";
+import { gql, useMutation } from '@apollo/client';
+import { useHistory } from "react-router-dom";;
 
 const GITHUB_AUTH_MUTATION = gql`
   mutation githubAuth($code: String!) {

@@ -1,4 +1,4 @@
-import { useQuery, useApolloClient } from "react-apollo";
+import { useApolloClient, useQuery } from '@apollo/client';
 import { AuthenticatedUser } from "./models";
 import { ROOT_QUERY, ROOT_DATA } from "./UsersPage";
 
