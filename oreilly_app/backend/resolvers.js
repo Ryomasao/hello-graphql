@@ -1,5 +1,6 @@
+const path = require('path')
 const { GraphQLScalarType } = require("graphql");
-const { authorizeWithGithub, getFakeUsers } = require("./lib");
+const { authorizeWithGithub, getFakeUsers, uploadStream } = require("./lib");
 
 const users = [
   { githubLogin: "u1", name: "user1" },
@@ -67,6 +68,10 @@ module.exports = resolvers = {
 
       const result = await context.db.collection("photos").insertOne(newPhoto);
       newPhoto.id = result.insertedId;
+
+      const toPath = path.join(__dirname, 'public', 'photos', `${newPhoto.id}.jpg`)
+      const { createReadStream } = await args.input.file
+      await uploadStream(createReadStream(), toPath)
 
       context.pubsub.publish("photo-added", { newPhoto });
 

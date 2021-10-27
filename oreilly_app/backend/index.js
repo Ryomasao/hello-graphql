@@ -17,6 +17,8 @@ async function start() {
   const db = client.db();
 
   const app = express();
+  app.use(express.static('public'))
+
   const pubsub = new PubSub();
   const server = new ApolloServer({
     typeDefs,

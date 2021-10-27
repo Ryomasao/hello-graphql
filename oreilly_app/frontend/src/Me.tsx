@@ -1,6 +1,6 @@
 import { useApolloClient, useQuery } from '@apollo/client';
 import { AuthenticatedUser } from "./models";
-import { ROOT_QUERY, ROOT_DATA } from "./UsersPage";
+import { ROOT_QUERY, ROOT_DATA } from "./LandingPage";
 
 type Props = {};
 
