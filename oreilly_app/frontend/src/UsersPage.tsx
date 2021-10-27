@@ -1,15 +1,23 @@
 import { gql } from "apollo-boost";
 import { useQuery, useMutation } from "react-apollo";
-import { User } from "./models";
+import { User, AuthenticatedUser } from "./models";
+import MainTemplate from "./components/MainTemplate";
 
-const ROOT_QUERY = gql`
+export const ROOT_QUERY = gql`
   query allUsers {
+    me {
+      ...userInfo
+    }
     totalUsers
     allUsers {
-      githubLogin
-      name
-      avatar
+      ...userInfo
     }
+  }
+
+  fragment userInfo on User {
+    githubLogin
+    name
+    avatar
   }
 `;
 
@@ -23,23 +31,26 @@ const ADD_FAKE_USERS_MUTATION = gql`
   }
 `
 
-type ROOT_DATA = {
+export type ROOT_DATA = {
   totalUsers: number;
   allUsers: Pick<User, "avatar" | "githubLogin" | "name">[];
+  me: AuthenticatedUser
 };
 
-const Users = () => {
-  const { loading, data, refetch } = useQuery<ROOT_DATA>(ROOT_QUERY);
+const UsersPage = () => {
+  const { loading, data, refetch } = useQuery<ROOT_DATA>(ROOT_QUERY, {
+    fetchPolicy: 'cache-and-network'
+  });
 
   return (
-    <div>
+    <MainTemplate>
       {loading ? <p>...loading</p> : data && 
 			<div>
 				<p>total:{data.totalUsers}</p>
 				<UserList users={data.allUsers} refetch={refetch}/>
 			</div>
 			}
-    </div>
+    </MainTemplate>
   );
 };
 
@@ -51,10 +62,24 @@ const UserList = (props: {
 }) => {
   const { users } = props;
   const [ addFakeUsers ] =  useMutation(ADD_FAKE_USERS_MUTATION, {
-    refetchQueries: [
-      { query:ROOT_QUERY }, 
-      'GetRoot' 
-    ]
+    //refetchQueries: [
+    //  { query:ROOT_QUERY }, 
+    //  'GetRoot' 
+    //]
+    update: (cache, { data }) => {
+      const newUsers = data.addFakeUsers
+      // https://qiita.com/longtime1116/items/fc6530c4a30fedb59770
+      // https://www.apollographql.com/docs/react/caching/cache-interaction/#combining-reads-and-writes
+      const rootData = {...cache.readQuery({query:ROOT_QUERY})} as ROOT_DATA
+      rootData.totalUsers += newUsers.length
+      rootData.allUsers = [
+        ...rootData.allUsers,
+        ...newUsers
+      ]
+
+      cache.writeQuery({query:ROOT_QUERY, data:rootData})
+      console.log(cache)
+    }
   })
 
   return (
@@ -83,4 +108,4 @@ const UserListItem = (props: { user: ROOT_DATA["allUsers"][0] }) => {
   );
 };
 
-export default Users;
+export default UsersPage;

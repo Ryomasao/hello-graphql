@@ -1,9 +1,16 @@
-import Users from "./Users";
+import { BrowserRouter, Route, Switch } from 'react-router-dom'
+import UsersPage from "./UsersPage";
+import GithubCallbackPage  from './GithubCallbackPage';
 
 function App() {
   return (
     <div>
-      <Users />
+      <BrowserRouter>
+      <Switch>
+        <Route exact path="/" component={UsersPage}/>
+        <Route exact path="/callback" component={GithubCallbackPage}/>
+      </Switch>
+      </BrowserRouter>
     </div>
   );
 }

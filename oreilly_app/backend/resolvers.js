@@ -72,7 +72,7 @@ module.exports = resolvers = {
 			}
 
 			await db.collection('users')
-				.replaceOne({githubToken: access_token}, latestUserInfo, {upsert: true})
+				.replaceOne({githubLogin: login}, latestUserInfo, {upsert: true})
 
 		return { user: latestUserInfo, token: access_token }
 		},

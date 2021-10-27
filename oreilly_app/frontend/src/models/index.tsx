@@ -5,3 +5,5 @@ export type User = {
   postedPhotos: any[]
   inPhotos: any[]
 }
+
+export type AuthenticatedUser = Pick<User, "avatar" | "githubLogin" | "name">
