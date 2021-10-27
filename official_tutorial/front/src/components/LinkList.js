@@ -19,6 +19,7 @@ const LinkList = props => {
           votes {
             id
             user {
+              id
               name
             }
           }
