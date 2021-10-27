@@ -1,27 +1,54 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { ApolloClient, ApolloProvider, createHttpLink, InMemoryCache } from "@apollo/client";
-import { setContext } from '@apollo/client/link/context';
+import { ApolloClient, ApolloProvider, HttpLink, ApolloLink, InMemoryCache, split, concat } from "@apollo/client";
+import { getMainDefinition } from '@apollo/client/utilities';
+import { WebSocketLink } from '@apollo/client/link/ws'
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 const URL_BACKEND = 'http://localhost:4000/graphql'
 
-const httpLink = createHttpLink({
+const httpLink = new HttpLink({
   uri: URL_BACKEND,
 });
-const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem('token');
-  return {
+
+const authMiddleware = new ApolloLink((operation, forward) => {
+  operation.setContext(({ headers = {} }) => ({
     headers: {
       ...headers,
-      authorization: token ||  "",
+      authorization: localStorage.getItem('token') || null,
     }
+  }));
+  return forward(operation);
+})
+
+const wsLink = new WebSocketLink({
+  uri: 'ws://localhost:4000/graphql',
+  options: {
+    reconnect: true,
+    connectionParams: {
+      authToken: localStorage.getItem('token') || null,
+    },
   }
 });
 
+// apolloClientはHTTP/WebSoketとかのリクエストをApolloLinkなるもので管理してる。
+// リクエスト/レスポンスの前後に処理を差し込みたい場合は、ApolloLinkをチェインしていくような感じになる。  
+// splitはSubscriptionであればWebSocket/それ以外はHTTPリクエストっていう振り分けを行うための関数
+const splitLink = split(
+  ({ query }) => {
+    const difinition = getMainDefinition(query);
+    return difinition.kind === 'OperationDefinition' && difinition.operation === 'subscription'
+  },
+  // ↑がtrueのときに利用するlink
+  wsLink,
+  // ↑がfalseのときに利用するlink
+  // https://www.apollographql.com/docs/react/networking/advanced-http-networking/
+  concat(authMiddleware, httpLink)
+)
+
 const client = new ApolloClient({ 
-  link: authLink.concat(httpLink),
+  link: splitLink,
   cache: new InMemoryCache()
 })
 
